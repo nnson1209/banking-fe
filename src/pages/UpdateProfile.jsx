@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
+import PageLayout from "../components/PageLayout";
+import {
+    Alert,
+    Box,
+    Button,
+    IconButton,
+    InputAdornment,
+    Stack,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { Lock, Visibility, VisibilityOff } from "@mui/icons-material";
 
 
 
@@ -16,8 +28,23 @@ const UpdateProfile = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const navigate = useNavigate();
+
+    const handleAutoFill = (e) => {
+        if (e.animationName !== "mui-auto-fill") return;
+
+        const { name, value } = e.target;
+        if (!name) return;
+
+        setPasswordData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -107,100 +134,181 @@ const UpdateProfile = () => {
 
 
     return (
-        <div className="profile-container">
-            <div className="profile-header">
-                <h1>Update Password</h1>
-                <button onClick={() => navigate('/profile')} className="btn btn-secondary">
-                    Back to Profile
-                </button>
-            </div>
+        <PageLayout
+            title="Change password"
+            subtitle="Enter your current password and set a new one."
+            maxWidth="sm"
+            actions={
+                <Button variant="outlined" onClick={() => navigate("/profile")}>
+                    Back to profile
+                </Button>
+            }
+        >
+            <Stack spacing={2.25}>
+                {(error || success) && (
+                    <Alert severity={error ? "error" : "success"}>{error || success}</Alert>
+                )}
 
-            <div className="update-profile-content">
-                <div className="password-update-section">
-                    <h2>Change Your Password</h2>
-                    <p className="password-instructions">
-                        For security reasons, please enter your current password and then create a new one.
-                    </p>
+                <Box component="form" onSubmit={handleSubmit}>
+                    <Stack spacing={2}>
+                        <TextField
+                            label="Current password"
+                            name="oldPassword"
+                            value={passwordData.oldPassword}
+                            onChange={handlePasswordChange}
+                            type={showOldPassword ? "text" : "password"}
+                            autoComplete="current-password"
+                            error={Boolean(validationErrors.oldPassword)}
+                            helperText={validationErrors.oldPassword || " "}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Lock fontSize="small" color="action" />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: (
+                                        <InputAdornment position="end" sx={{ m: 0, alignSelf: "center" }}>
+                                            <IconButton
+                                                onClick={() => setShowOldPassword((v) => !v)}
+                                                edge="end"
+                                                color="inherit"
+                                                sx={(theme) => ({
+                                                    color: theme.palette.text.secondary,
+                                                    bgcolor: "transparent",
+                                                    "&:hover": { bgcolor: "transparent" },
+                                                })}
+                                            >
+                                                {showOldPassword ? (
+                                                    <VisibilityOff fontSize="small" />
+                                                ) : (
+                                                    <Visibility fontSize="small" />
+                                                )}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                },
+                                htmlInput: {
+                                    onAnimationStart: handleAutoFill,
+                                },
+                            }}
+                        />
 
-                    {error && <div className="error-message">{error}</div>}
-                    {success && <div className="success-message">{success}</div>}
+                        <TextField
+                            label="New password"
+                            name="newPassword"
+                            value={passwordData.newPassword}
+                            onChange={handlePasswordChange}
+                            type={showNewPassword ? "text" : "password"}
+                            autoComplete="new-password"
+                            error={Boolean(validationErrors.newPassword)}
+                            helperText={validationErrors.newPassword || "At least 6 characters"}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Lock fontSize="small" color="action" />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: (
+                                        <InputAdornment position="end" sx={{ m: 0, alignSelf: "center" }}>
+                                            <IconButton
+                                                onClick={() => setShowNewPassword((v) => !v)}
+                                                edge="end"
+                                                color="inherit"
+                                                sx={(theme) => ({
+                                                    color: theme.palette.text.secondary,
+                                                    bgcolor: "transparent",
+                                                    "&:hover": { bgcolor: "transparent" },
+                                                })}
+                                            >
+                                                {showNewPassword ? (
+                                                    <VisibilityOff fontSize="small" />
+                                                ) : (
+                                                    <Visibility fontSize="small" />
+                                                )}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                },
+                                htmlInput: {
+                                    onAnimationStart: handleAutoFill,
+                                },
+                            }}
+                        />
 
-                    <form onSubmit={handleSubmit} className="password-form">
-                        <div className="form-group">
-                            <label htmlFor="oldPassword">Current Password</label>
-                            <input
-                                type="password"
-                                id="oldPassword"
-                                name="oldPassword"
-                                value={passwordData.oldPassword}
-                                onChange={handlePasswordChange}
-                                className={validationErrors.oldPassword ? 'error' : ''}
-                            />
-                            {validationErrors.oldPassword && (
-                                <span className="field-error">{validationErrors.oldPassword}</span>
-                            )}
-                        </div>
+                        <TextField
+                            label="Confirm new password"
+                            name="confirmPassword"
+                            value={passwordData.confirmPassword}
+                            onChange={handlePasswordChange}
+                            type={showConfirmPassword ? "text" : "password"}
+                            autoComplete="new-password"
+                            error={Boolean(validationErrors.confirmPassword)}
+                            helperText={validationErrors.confirmPassword || " "}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Lock fontSize="small" color="action" />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: (
+                                        <InputAdornment position="end" sx={{ m: 0, alignSelf: "center" }}>
+                                            <IconButton
+                                                onClick={() => setShowConfirmPassword((v) => !v)}
+                                                edge="end"
+                                                color="inherit"
+                                                sx={(theme) => ({
+                                                    color: theme.palette.text.secondary,
+                                                    bgcolor: "transparent",
+                                                    "&:hover": { bgcolor: "transparent" },
+                                                })}
+                                            >
+                                                {showConfirmPassword ? (
+                                                    <VisibilityOff fontSize="small" />
+                                                ) : (
+                                                    <Visibility fontSize="small" />
+                                                )}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                },
+                                htmlInput: {
+                                    onAnimationStart: handleAutoFill,
+                                },
+                            }}
+                        />
 
-                        <div className="form-group">
-                            <label htmlFor="newPassword">New Password</label>
-                            <input
-                                type="password"
-                                id="newPassword"
-                                name="newPassword"
-                                value={passwordData.newPassword}
-                                onChange={handlePasswordChange}
-                                className={validationErrors.newPassword ? 'error' : ''}
-                            />
-                            {validationErrors.newPassword && (
-                                <span className="field-error">{validationErrors.newPassword}</span>
-                            )}
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="confirmPassword">Confirm New Password</label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={passwordData.confirmPassword}
-                                onChange={handlePasswordChange}
-                                className={validationErrors.confirmPassword ? 'error' : ''}
-                            />
-                            {validationErrors.confirmPassword && (
-                                <span className="field-error">{validationErrors.confirmPassword}</span>
-                            )}
-                        </div>
-
-                        <div className="form-buttons">
-                            <button
+                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ pt: 0.5 }}>
+                            <Button
                                 type="submit"
-                                className="btn btn-primary"
+                                variant="contained"
                                 disabled={loading}
+                                sx={{ flex: 1, py: 1.1 }}
                             >
-                                {loading ? 'Updating Password...' : 'Update Password'}
-                            </button>
-                            <button
+                                {loading ? "Updating…" : "Update password"}
+                            </Button>
+                            <Button
                                 type="button"
-                                onClick={() => navigate('/profile')}
-                                className="btn btn-secondary"
+                                variant="outlined"
+                                onClick={() => navigate("/profile")}
+                                sx={{ flex: 1, py: 1.1 }}
                             >
                                 Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                            </Button>
+                        </Stack>
+                    </Stack>
+                </Box>
 
-                <div className="password-guidelines">
-                    <h3>Password Guidelines</h3>
-                    <ul>
-                        <li>Use at least 6 characters</li>
-                        <li>Include a mix of letters, numbers, and symbols</li>
-                        <li>Avoid using easily guessable information</li>
-                        <li>Don't reuse passwords from other accounts</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+                <Box>
+                    <Typography sx={{ fontWeight: 900, mb: 0.75 }}>Password guidelines</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Use at least 6 characters and avoid easily guessable information.
+                    </Typography>
+                </Box>
+            </Stack>
+        </PageLayout>
     );
 
 }

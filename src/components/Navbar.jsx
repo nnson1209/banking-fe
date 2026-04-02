@@ -2,6 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiService } from "../services/api";
 import logo from "../logo.png";
+import {
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Typography,
+} from "@mui/material";
 
 
 const Navbar = () => {
@@ -89,17 +97,33 @@ const Navbar = () => {
                 </ul>
             </div>
 
-            {showModal && (
-                <div className="modal-backdrop">
-                    <div className="modal">
-                        <p>Are you sure you want to logout?</p>
-                        <div className="modal-actions">
-                            <button onClick={confirmLogout} className="btn-confirm">Yes</button>
-                            <button onClick={cancelLogout} className="btn-cancel">No</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <Dialog
+                open={showModal}
+                onClose={cancelLogout}
+                fullWidth
+                maxWidth="xs"
+                sx={{
+                    "& .MuiDialog-container": {
+                        alignItems: "center",
+                        justifyContent: "center",
+                    },
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 900 }}>Log out?</DialogTitle>
+                <DialogContent>
+                    <Typography color="text.secondary">
+                        Are you sure you want to log out?
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5 }}>
+                    <Button variant="outlined" onClick={cancelLogout}>
+                        Cancel
+                    </Button>
+                    <Button variant="contained" color="error" onClick={confirmLogout}>
+                        Log out
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
         </nav>
     );

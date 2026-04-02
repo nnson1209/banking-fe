@@ -1,5 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiService } from "../services/api";
+import PageLayout from "../components/PageLayout";
+import {
+    Alert,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    MenuItem,
+    Paper,
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
 
 
 
@@ -108,99 +128,141 @@ const Transactions = () => {
 
 
     return (
-        <div className="transactions-container">
+        <PageLayout
+            title="Transactions"
+            subtitle="View your transaction history"
+            maxWidth="lg"
+        >
+            <Stack spacing={2}>
+                {error && <Alert severity="error">{error}</Alert>}
 
-            <div className="transactions-header">
-                <h1>Transaction History</h1>
-            </div>
-
-            <div className="transactions-content">
-                {error && <div className="error-message">{error}</div>}
-
-                <div className="account-selector">
-                    <label htmlFor="accountSelect">Select Account:</label>
-                    <select
-                        id="accountSelect"
-                        value={selectedAccount}
-                        onChange={handleAccountChange}
-                        disabled={loading}
-                    >
-                        {userAccounts.map(account => (
-                            <option key={account.id} value={account.accountNumber}>
-                                {account.accountNumber} - {account.accountType}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                <TextField
+                    select
+                    label="Account"
+                    value={selectedAccount}
+                    onChange={handleAccountChange}
+                    disabled={loading}
+                    helperText={userAccounts.length ? " " : "No accounts found"}
+                >
+                    {userAccounts.map((account) => (
+                        <MenuItem key={account.id} value={account.accountNumber}>
+                            {account.accountNumber} — {account.accountType}
+                        </MenuItem>
+                    ))}
+                </TextField>
 
                 {loading ? (
-                    <div className="loading">Loading transactions...</div>
+                    <Box sx={{ py: 6, display: "grid", placeItems: "center" }}>
+                        <CircularProgress />
+                    </Box>
                 ) : (
-                    <>
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            borderRadius: 3,
+                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                            overflow: "hidden",
+                        }}
+                    >
+                        <TableContainer>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
+                                        <TableCell sx={{ fontWeight: 900 }} align="right">Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 900 }}>Description</TableCell>
+                                        <TableCell sx={{ fontWeight: 900 }}>Status</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {transactions.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5}>
+                                                <Typography color="text.secondary">
+                                                    No transactions found for this account.
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        transactions.map((transaction) => {
+                                            const amountText = formatAmount(
+                                                transaction.amount,
+                                                transaction.transactionType,
+                                                transaction.destinationAccount
+                                            );
+                                            const isPositive = amountText.startsWith("+");
 
-                        <div className="transactions-list">
-                            {transactions.length === 0 ? (
-                                <div className="no-transactions">
-                                    No transactions found for this account
-                                </div>
-                            ) : (
-                                transactions.map(transaction => (
-                                    <div key={transaction.id} className="transaction-item">
-                                        <div className="transaction-main">
-                                            <div className="transaction-type">{transaction.transactionType}</div>
-
-                                            <div className={`transaction-amount ${transaction.transactionType === 'DEPOSIT' ||
-                                                (transaction.transactionType === 'TRANSFER' && transaction.destinationAccount === selectedAccount)
-                                                ? 'deposit'
-                                                : 'withdrawal'
-                                                }`}>
-                                                {formatAmount(transaction.amount, transaction.transactionType, transaction.destinationAccount)}
-                                            </div>
-
-                                        </div>
-                                        <div className="transaction-details">
-                                            <div className="transaction-date">{formatDate(transaction.transactionDate)}</div>
-                                            <div className="transaction-description">{transaction.description}</div>
-                                            <div className="transaction-status">{transaction.status}</div>
-                                            {transaction.sourceAccount && transaction.destinationAccount && (
-                                                <div className="transaction-accounts">
-                                                    From: {transaction.sourceAccount} → To: {transaction.destinationAccount}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-
-                        {pagination.totalPages > 0 && (
-                            <div className="pagination">
-                                <button
-                                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                    disabled={pagination.currentPage === 0}
-                                    className="pagination-btn"
-                                >
-                                    Previous
-                                </button>
-                                <span className="pagination-info">
-                                    Page {pagination.currentPage + 1} of {pagination.totalPages}
-                                </span>
-                                <button
-                                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                    disabled={pagination.currentPage === pagination.totalPages - 1}
-                                    className="pagination-btn"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        )}
-                    </>
+                                            return (
+                                                <TableRow key={transaction.id} hover>
+                                                    <TableCell>
+                                                        <Typography sx={{ fontWeight: 800 }}>
+                                                            {transaction.transactionType}
+                                                        </Typography>
+                                                        {transaction.sourceAccount && transaction.destinationAccount ? (
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {transaction.sourceAccount} → {transaction.destinationAccount}
+                                                            </Typography>
+                                                        ) : null}
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography
+                                                            sx={{
+                                                                fontWeight: 900,
+                                                                color: (t) =>
+                                                                    isPositive ? t.palette.success.light : t.palette.error.light,
+                                                            }}
+                                                        >
+                                                            {amountText}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography color="text.secondary">
+                                                            {formatDate(transaction.transactionDate)}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
+                                                            {transaction.description}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip size="small" label={transaction.status} variant="outlined" />
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
                 )}
 
-            </div>
-
-        </div>
+                {pagination.totalPages > 0 && (
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} alignItems={{ xs: "stretch", sm: "center" }} justifyContent="space-between">
+                        <Button
+                            variant="outlined"
+                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                            disabled={pagination.currentPage === 0}
+                        >
+                            Previous
+                        </Button>
+                        <Typography color="text.secondary" sx={{ textAlign: "center" }}>
+                            Page {pagination.currentPage + 1} of {pagination.totalPages}
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                            disabled={pagination.currentPage === pagination.totalPages - 1}
+                        >
+                            Next
+                        </Button>
+                    </Stack>
+                )}
+            </Stack>
+        </PageLayout>
     )
 
 

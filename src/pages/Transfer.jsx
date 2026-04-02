@@ -1,5 +1,21 @@
 import { useState, useEffect } from "react";
 import { apiService } from '../services/api';
+import PageLayout from "../components/PageLayout";
+import {
+    Alert,
+    Box,
+    Button,
+    Chip,
+    Divider,
+    InputAdornment,
+    MenuItem,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { AccountBalanceOutlined, CheckCircleOutline, InfoOutlined, PaidOutlined, SearchOutlined } from "@mui/icons-material";
 
 
 
@@ -196,128 +212,203 @@ const Transfer = () => {
 
 
     return (
-        <div className="transfer-container">
-            <div className="transfer-header">
-                <h1>Make a Transfer</h1>
-            </div>
+        <PageLayout
+            title="Transfer"
+            subtitle="Send money between accounts"
+            maxWidth="lg"
+        >
+            <Box
+                sx={{
+                    width: "100%",
+                    display: "grid",
+                    gap: 2,
+                    gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.45fr) minmax(0, 1fr)" },
+                    alignItems: "stretch",
+                }}
+            >
+                <Box sx={{ display: "flex" }}>
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            width: "100%",
+                            height: "100%",
+                            p: 2,
+                            borderRadius: 3,
+                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                        }}
+                    >
+                        <Stack spacing={2}>
+                            {(error || success) && (
+                                <Alert severity={error ? "error" : "success"}>
+                                    {error || success}
+                                </Alert>
+                            )}
 
-            <div className="transfer-content">
+                            <Box component="form" onSubmit={handleSubmit}>
+                                <Stack spacing={2}>
+                                    <TextField
+                                        select
+                                        label="From account"
+                                        name="accountNumber"
+                                        value={formData.accountNumber}
+                                        onChange={handleChange}
+                                        required
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <AccountBalanceOutlined fontSize="small" color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    >
+                                        {userAccounts.map((account) => (
+                                            <MenuItem key={account.id} value={account.accountNumber}>
+                                                {account.accountNumber} — {account.accountType} ({account.currency} {account.balance.toFixed(2)})
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
 
-                <div className="transfer-form-section">
+                                    <Stack
+                                        direction={{ xs: "column", sm: "row" }}
+                                        spacing={1.25}
+                                        alignItems={{ xs: "stretch", sm: "center" }}
+                                    >
+                                        <TextField
+                                            fullWidth
+                                            label="Destination account"
+                                            name="destinationAccountNumber"
+                                            value={formData.destinationAccountNumber}
+                                            onChange={handleChange}
+                                            required
+                                            placeholder="Enter destination account number"
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchOutlined fontSize="small" color="action" />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outlined"
+                                            onClick={verifyDestinationAccount}
+                                            disabled={verifyingAccount || !formData.destinationAccountNumber}
+                                            sx={{
+                                                whiteSpace: "nowrap",
+                                                height: 56,
+                                                minWidth: { xs: "100%", sm: 124 },
+                                                px: 2.25,
+                                            }}
+                                        >
+                                            {verifyingAccount ? "Verifying…" : "Verify"}
+                                        </Button>
+                                    </Stack>
 
-                    {error && <div className="error-message">{error}</div>}
-                    {success && <div className="success-message">{success}</div>}
-                    <form onSubmit={handleSubmit} className="transfer-form">
-                        <div className="form-group">
-                            <label htmlFor="accountNumber">From Account</label>
-                            <select
-                                id="accountNumber"
-                                name="accountNumber"
-                                value={formData.accountNumber}
-                                onChange={handleChange}
-                                required
-                            >
-                                {userAccounts.map(account => (
-                                    <option key={account.id} value={account.accountNumber}>
-                                        {account.accountNumber} - {account.accountType} ({account.currency} {account.balance.toFixed(2)})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                                    {destinationAccountInfo && (
+                                        <Paper
+                                            variant="outlined"
+                                            sx={{
+                                                p: 1.75,
+                                                borderRadius: 2,
+                                                borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                                backgroundColor: (t) => alpha(t.palette.background.default, 0.25),
+                                            }}
+                                        >
+                                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                                                <CheckCircleOutline fontSize="small" />
+                                                <Typography sx={{ fontWeight: 900 }}>Destination verified</Typography>
+                                            </Stack>
+                                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between">
+                                                <Typography color="text.secondary">
+                                                    {destinationAccountInfo.accountType} — {destinationAccountInfo.accountNumber}
+                                                </Typography>
+                                                <Chip size="small" label={destinationAccountInfo.status} variant="outlined" />
+                                            </Stack>
+                                        </Paper>
+                                    )}
 
-                        <div className="form-group">
-                            <label htmlFor="destinationAccountNumber">Destination Account Number *</label>
-                            <input
-                                type="text"
-                                id="destinationAccountNumber"
-                                name="destinationAccountNumber"
-                                value={formData.destinationAccountNumber}
-                                onChange={handleChange}
-                                placeholder="Enter destination account number"
-                                required
-                            />
+                                    <TextField
+                                        label="Amount"
+                                        name="amount"
+                                        type="number"
+                                        value={formData.amount}
+                                        onChange={handleChange}
+                                        required
+                                        inputProps={{ min: "0.01", step: "0.01" }}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <PaidOutlined fontSize="small" color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        helperText={
+                                            formData.amount
+                                                ? `Available: ${formatCurrency(
+                                                    userAccounts.find((acc) => acc.accountNumber === formData.accountNumber)?.balance || 0
+                                                )}`
+                                                : " "
+                                        }
+                                    />
 
-                            <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={verifyDestinationAccount}
-                                disabled={verifyingAccount || !formData.destinationAccountNumber}
-                            >
-                                {verifyingAccount ? 'Verifying...' : 'Verify'}
-                            </button>
-                        </div>
+                                    <TextField
+                                        label="Description (optional)"
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        placeholder="Optional description"
+                                    />
 
-                        {destinationAccountInfo && (
-                            <div className="account-info">
-                                <h4>Destination Account Verified</h4>
-                                <div className="account-details">
-                                    <p><strong>Account Type:</strong> {destinationAccountInfo.accountType}</p>
-                                    <p><strong>Account Number:</strong> {destinationAccountInfo.accountNumber}</p>
-                                    <p><strong>Status:</strong> <span className={`status ${destinationAccountInfo.status.toLowerCase()}`}>{destinationAccountInfo.status}</span></p>
-                                </div>
-                            </div>
-                        )}
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        disabled={loading}
+                                        sx={{ py: 1.15 }}
+                                    >
+                                        {loading ? "Processing…" : "Transfer money"}
+                                    </Button>
+                                </Stack>
+                            </Box>
+                        </Stack>
+                    </Paper>
+                </Box>
 
-                        <div className="form-group">
-                            <label htmlFor="amount">Amount *</label>
-                            <input
-                                type="number"
-                                id="amount"
-                                name="amount"
-                                value={formData.amount}
-                                onChange={handleChange}
-                                placeholder="0.00"
-                                min="0.01"
-                                step="0.01"
-                                required
-                            />
-                            {formData
-                                .amount && (
-                                    <div className="balance-check">
-                                        <small>
-                                            Available: {formatCurrency(
-                                                userAccounts.find(acc => acc.accountNumber === formData.accountNumber)?.balance || 0
-                                            )}
-                                        </small>
-                                    </div>
-                                )}
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="description">Description</label>
-                            <input
-                                type="text"
-                                id="description"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                placeholder="Optional description"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="btn btn-primary transfer-btn"
-                            disabled={loading}
-                        >
-                            {loading ? 'Processing Transfer...' : 'Transfer Money'}
-                        </button>
-                    </form>
-                </div>
-
-                <div className="transfer-guidelines">
-                    <h3>Transfer Guidelines</h3>
-                    <ul>
-                        <li>Transfers are processed instantly</li>
-                        <li>Ensure the destination account number is correct</li>
-                        <li>Double-check the amount before confirming</li>
-                        <li>Transfers cannot be reversed once processed</li>
-                        <li>Contact support if you encounter any issues</li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
+                <Box sx={{ display: "flex" }}>
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            width: "100%",
+                            height: "100%",
+                            p: 2,
+                            borderRadius: 3,
+                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                        }}
+                    >
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                            <InfoOutlined fontSize="small" />
+                            <Typography sx={{ fontWeight: 900 }}>Transfer guidelines</Typography>
+                        </Stack>
+                        <Divider
+                            sx={{
+                                mb: 1.35,
+                                opacity: 0.82,
+                                borderColor: (t) => alpha(t.palette.common.white, 0.24),
+                            }}
+                        />
+                        <Stack spacing={0.9}>
+                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55 }}>• Transfers are processed instantly</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55 }}>• Verify the destination account number</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55 }}>• Double-check the amount before confirming</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55 }}>• Transfers cannot be reversed once processed</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55 }}>• Contact support if you encounter issues</Typography>
+                        </Stack>
+                    </Paper>
+                </Box>
+            </Box>
+        </PageLayout>
     );
 
 

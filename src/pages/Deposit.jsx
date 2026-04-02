@@ -1,5 +1,21 @@
 import { useState } from 'react';
 import { apiService } from '../services/api';
+import PageLayout from "../components/PageLayout";
+import {
+    Alert,
+    Box,
+    Button,
+    Chip,
+    Divider,
+    Grid,
+    InputAdornment,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { PaidOutlined, SearchOutlined } from "@mui/icons-material";
 
 
 
@@ -19,6 +35,16 @@ const Deposit = () => {
     const [success, setSuccess] = useState('');
     const [searchLoading, setSearchLoading] = useState(false);
     const [accountInfo, setAccountInfo] = useState(null);
+
+    const handleAutoFill = (e) => {
+        if (e.animationName !== "mui-auto-fill") return;
+        const { name, value } = e.target;
+        if (!name) return;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
 
 
 
@@ -160,144 +186,217 @@ const Deposit = () => {
 
 
     return (
-        <div className="admin-deposit-container">
-            <div className="admin-deposit-header">
-                <h2>Deposit funds into customer accounts</h2>
-            </div>
+        <PageLayout
+            title="Deposit"
+            subtitle="Deposit funds into customer accounts"
+            maxWidth="lg"
+        >
+            <Stack spacing={2.25}>
+                {(error || success) && (
+                    <Alert severity={error ? "error" : "success"}>{error || success}</Alert>
+                )}
 
-            {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
+                <Grid container spacing={2.25}>
+                    <Grid item xs={12} md={6}>
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                p: 2.25,
+                                borderRadius: 3,
+                                borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                            }}
+                        >
+                            <Typography sx={{ fontWeight: 900, mb: 1 }}>Make deposit</Typography>
+                            <Box component="form" onSubmit={handleSubmit}>
+                                <Stack spacing={2}>
+                                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} alignItems={{ xs: "stretch", sm: "flex-start" }}>
+                                        <TextField
+                                            fullWidth
+                                            label="Account number"
+                                            name="accountNumber"
+                                            value={formData.accountNumber}
+                                            onChange={handleChange}
+                                            placeholder="Enter customer account number"
+                                            required
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchOutlined fontSize="small" color="action" />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            slotProps={{
+                                                htmlInput: {
+                                                    onAnimationStart: handleAutoFill,
+                                                },
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outlined"
+                                            onClick={searchAccount}
+                                            disabled={searchLoading}
+                                            sx={{ px: 2.25, py: 1.45, whiteSpace: "nowrap" }}
+                                        >
+                                            {searchLoading ? "Searching…" : "Verify"}
+                                        </Button>
+                                    </Stack>
 
-            <div className="deposit-content">
-                <div className="deposit-form-section">
-                    <div className="form-card">
-                        <h2>Make Deposit</h2>
+                                    {accountInfo && (
+                                        <Paper
+                                            variant="outlined"
+                                            sx={{
+                                                p: 1.75,
+                                                borderRadius: 2,
+                                                borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                                backgroundColor: (t) => alpha(t.palette.background.default, 0.25),
+                                            }}
+                                        >
+                                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ xs: "flex-start", sm: "center" }} justifyContent="space-between">
+                                                <Box>
+                                                    <Typography sx={{ fontWeight: 900 }}>Account information</Typography>
+                                                    <Typography color="text.secondary">
+                                                        {accountInfo.accountType} — {formatCurrency(accountInfo.balance, accountInfo.currency)}
+                                                    </Typography>
+                                                </Box>
+                                                <Chip size="small" label={accountInfo.status} variant="outlined" />
+                                            </Stack>
+                                        </Paper>
+                                    )}
 
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label htmlFor="accountNumber">Account Number *</label>
-                                <div className="input-with-button">
-                                    <input
-                                        type="text"
-                                        id="accountNumber"
-                                        name="accountNumber"
-                                        value={formData.accountNumber}
+                                    <TextField
+                                        label="Amount"
+                                        name="amount"
+                                        type="number"
+                                        value={formData.amount}
                                         onChange={handleChange}
-                                        placeholder="Enter customer account number"
                                         required
+                                        placeholder="0.00"
+                                        inputProps={{ min: "0.01", step: "0.01" }}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <PaidOutlined fontSize="small" color="action" />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        slotProps={{
+                                            htmlInput: {
+                                                onAnimationStart: handleAutoFill,
+                                            },
+                                        }}
                                     />
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={searchAccount}
-                                        disabled={searchLoading}
+
+                                    <TextField
+                                        label="Description"
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        placeholder="e.g., Cash deposit, Transfer from bank"
+                                        required
+                                        slotProps={{
+                                            htmlInput: {
+                                                onAnimationStart: handleAutoFill,
+                                            },
+                                        }}
+                                    />
+
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        disabled={loading || !accountInfo}
+                                        sx={{ py: 1.15 }}
                                     >
-                                        {searchLoading ? 'Searching...' : 'Verify'}
-                                    </button>
-                                </div>
-                            </div>
+                                        {loading ? "Processing…" : "Deposit funds"}
+                                    </Button>
+                                </Stack>
+                            </Box>
+                        </Paper>
+                    </Grid>
 
-                            {accountInfo && (
-                                <div className="account-info">
-                                    <h4>Account Information</h4>
-                                    <div className="account-details">
-                                        <p><strong>Type:</strong> {accountInfo.accountType}</p>
-                                        <p><strong>Balance:</strong> {formatCurrency(accountInfo.balance, accountInfo.currency)}</p>
-                                        <p><strong>Status:</strong> <span className={`status ${accountInfo.status.toLowerCase()}`}>{accountInfo.status}</span></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="form-group">
-                                <label htmlFor="amount">Amount *</label>
-                                <input
-                                    type="number"
-                                    id="amount"
-                                    name="amount"
-                                    value={formData.amount}
-                                    onChange={handleChange}
-                                    placeholder="0.00"
-                                    min="0.01"
-                                    step="0.01"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="description">Description *</label>
-                                <input
-                                    type="text"
-                                    id="description"
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    placeholder="e.g., Cash deposit, Transfer from bank, etc."
-                                    required
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="btn btn-primary deposit-btn"
-                                disabled={loading || !accountInfo}
+                    <Grid item xs={12} md={6}>
+                        <Stack spacing={2.25}>
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    p: 2.25,
+                                    borderRadius: 3,
+                                    borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                    backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                }}
                             >
-                                {loading ? 'Processing Deposit...' : 'Deposit Funds'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                                <Typography sx={{ fontWeight: 900, mb: 1 }}>Recent deposits</Typography>
+                                <Divider sx={{ mb: 1.5, opacity: 0.16 }} />
+                                {recentTransactions.length > 0 ? (
+                                    <Stack spacing={1}>
+                                        {recentTransactions
+                                            .filter((tx) => tx.transactionType === "DEPOSIT")
+                                            .slice(0, 5)
+                                            .map((transaction) => (
+                                                <Paper
+                                                    key={transaction.id}
+                                                    variant="outlined"
+                                                    sx={{
+                                                        p: 1.5,
+                                                        borderRadius: 2,
+                                                        borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                                        backgroundColor: (t) => alpha(t.palette.background.default, 0.25),
+                                                    }}
+                                                >
+                                                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }}>
+                                                        <Box sx={{ minWidth: 0 }}>
+                                                            <Typography sx={{ fontWeight: 900 }}>DEPOSIT</Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {formatDate(transaction.transactionDate)}
+                                                            </Typography>
+                                                        </Box>
+                                                        <Typography sx={{ fontWeight: 900, color: (t) => t.palette.success.light }}>
+                                                            +{formatCurrency(transaction.amount)}
+                                                        </Typography>
+                                                    </Stack>
+                                                    {transaction.description ? (
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                            {transaction.description}
+                                                        </Typography>
+                                                    ) : null}
+                                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
+                                                        Account: {transaction.sourceAccount || formData.accountNumber}
+                                                    </Typography>
+                                                </Paper>
+                                            ))}
+                                    </Stack>
+                                ) : (
+                                    <Typography color="text.secondary">
+                                        No recent deposits found.
+                                    </Typography>
+                                )}
+                            </Paper>
 
-                <div className="recent-transactions-section">
-                    <div className="transactions-card">
-                        <h2>Recent Deposits</h2>
-                        {recentTransactions.length > 0 ? (
-                            <div className="transactions-list">
-                                {recentTransactions
-                                    .filter(tx => tx.transactionType === 'DEPOSIT')
-                                    .slice(0, 5)
-                                    .map(transaction => (
-                                        <div key={transaction.id} className="transaction-item">
-                                            <div className="transaction-main">
-                                                <div className="transaction-type deposit">DEPOSIT</div>
-                                                <div className="transaction-amount">
-                                                    +{formatCurrency(transaction.amount)}
-                                                </div>
-                                            </div>
-                                            <div className="transaction-details">
-                                                <div className="transaction-date">
-                                                    {formatDate(transaction.transactionDate)}
-                                                </div>
-                                                <div className="transaction-description">
-                                                    {transaction.description}
-                                                </div>
-                                                <div className="transaction-account">
-                                                    Account: {transaction.sourceAccount || formData.accountNumber}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        ) : (
-                            <div className="no-transactions">
-                                <p>No recent deposits found</p>
-                                <p className="hint">Recent deposits will appear here after transactions</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="guidelines-card">
-                        <h3>Deposit Guidelines</h3>
-                        <ul>
-                            <li>Verify account number before processing deposits</li>
-                            <li>Ensure amount is correct and properly formatted</li>
-                            <li>Provide clear description for audit purposes</li>
-                            <li>Double-check all information before submitting</li>
-                            <li>Keep records of all deposit transactions</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    p: 2.25,
+                                    borderRadius: 3,
+                                    borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                    backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                }}
+                            >
+                                <Typography sx={{ fontWeight: 900, mb: 1 }}>Deposit guidelines</Typography>
+                                <Divider sx={{ mb: 1.5, opacity: 0.16 }} />
+                                <Stack spacing={1}>
+                                    <Typography variant="body2" color="text.secondary">• Verify account number before deposits</Typography>
+                                    <Typography variant="body2" color="text.secondary">• Ensure amount is correct</Typography>
+                                    <Typography variant="body2" color="text.secondary">• Provide clear description for audit</Typography>
+                                    <Typography variant="body2" color="text.secondary">• Double-check info before submitting</Typography>
+                                    <Typography variant="body2" color="text.secondary">• Keep records of deposit transactions</Typography>
+                                </Stack>
+                            </Paper>
+                        </Stack>
+                    </Grid>
+                </Grid>
+            </Stack>
+        </PageLayout>
     );
 
 }

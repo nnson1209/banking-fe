@@ -1,5 +1,22 @@
 import { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import PageLayout from "../components/PageLayout";
+import {
+    Alert,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    Divider,
+    Grid,
+    Paper,
+    Stack,
+    Tab,
+    Tabs,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
 
 
 
@@ -176,306 +193,402 @@ const AuditorDashboard = () => {
 
 
     return (
-        <div className="auditor-dashboard">
-            <div className="dashboard-header">
-                <h1>Auditor Dashboard</h1>
-                <button className="btn btn-secondary" onClick={clearSearch}>Clear Search</button>
-            </div>
+        <PageLayout
+            title="Auditor dashboard"
+            subtitle="Search users, accounts, and transactions"
+            maxWidth="lg"
+            actions={
+                <Button variant="outlined" onClick={clearSearch}>
+                    Clear search
+                </Button>
+            }
+        >
+            <Stack spacing={2.25}>
+                {error && <Alert severity="error">{error}</Alert>}
+                {loading && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                        <CircularProgress size={18} />
+                        <Typography color="text.secondary">Loading…</Typography>
+                    </Box>
+                )}
 
-            {error && <div className="error-message">{error}</div>}
-            {loading && <div className="loading">Loading...</div>}
-
-            <div className="tabs">
-                <button
-                    className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('overview')}
+                <Tabs
+                    value={activeTab}
+                    onChange={(_, v) => setActiveTab(v)}
+                    variant="scrollable"
+                    allowScrollButtonsMobile
+                    sx={{
+                        "& .MuiTab-root": { textTransform: "none", fontWeight: 800 },
+                        borderBottom: (t) => `1px solid ${alpha(t.palette.common.white, 0.08)}`,
+                    }}
                 >
-                    Overview
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'search' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('search')}
-                >
-                    Search
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'user' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('user')}
-                    disabled={!selectedUser}
-                >
-                    User Details
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'account' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('account')}
-                    disabled={!selectedAccount}
-                >
-                    Account Details
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'transactions' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('transactions')}
-                    disabled={accountTransactions.length === 0}
-                >
-                    Transactions
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'transaction' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('transaction')}
-                    disabled={!selectedTransaction}
-                >
-                    Transaction Details
-                </button>
-            </div>
+                    <Tab value="overview" label="Overview" />
+                    <Tab value="search" label="Search" />
+                    <Tab value="user" label="User details" disabled={!selectedUser} />
+                    <Tab value="account" label="Account details" disabled={!selectedAccount} />
+                    <Tab value="transactions" label="Transactions" disabled={accountTransactions.length === 0} />
+                    <Tab value="transaction" label="Transaction details" disabled={!selectedTransaction} />
+                </Tabs>
 
-            {activeTab === 'overview' && (
-                <div className="tab-content">
-                    <div className="overview-cards">
-                        <div className="stat-card">
-                            <h3>Total Users</h3>
-                            <p className="stat-number">{systemTotals?.totalUsers || 0}</p>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Total Accounts</h3>
-                            <p className="stat-number">{systemTotals?.totalAccounts || 0}</p>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Total Transactions</h3>
-                            <p className="stat-number">{systemTotals?.totalTransactions || 0}</p>
-                        </div>
-                    </div>
-
-                    <div className="quick-actions">
-                        <h2>Quick Actions</h2>
-                        <div className="action-buttons">
-                            <button className="btn btn-primary" onClick={() => setActiveTab('search')}>
-                                Search Records
-                            </button>
-                            <button className="btn btn-secondary" onClick={loadSystemTotals}>
-                                Refresh Statistics
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'search' && (
-                <div className="tab-content">
-                    <div className="search-forms">
-                        <div className="search-form">
-                            <h3>Search User by Email</h3>
-                            <div className="form-group">
-                                <input
-                                    type="email"
-                                    value={userEmail}
-                                    onChange={(e) => setUserEmail(e.target.value)}
-                                    placeholder="Enter email address"
-                                    className="form-input"
-                                />
-                                <button className="btn btn-primary" onClick={searchUser}>Search User</button>
-                            </div>
-                        </div>
-
-                        <div className="search-form">
-                            <h3>Search Account by Number</h3>
-                            <div className="form-group">
-                                <input
-                                    type="text"
-                                    value={accountNumber}
-                                    onChange={(e) => setAccountNumber(e.target.value)}
-                                    placeholder="Enter account number"
-                                    className="form-input"
-                                />
-                                <button className="btn btn-primary" onClick={searchAccount}>Search Account</button>
-                            </div>
-                        </div>
-
-                        <div className="search-form">
-                            <h3>Search Transaction by ID</h3>
-                            <div className="form-group">
-                                <input
-                                    type="number"
-                                    value={transactionId}
-                                    onChange={(e) => setTransactionId(e.target.value)}
-                                    placeholder="Enter transaction ID"
-                                    className="form-input"
-                                />
-                                <button className="btn btn-primary" onClick={searchTransaction}>Search Transaction</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'user' && selectedUser && (
-                <div className="tab-content">
-                    <div className="user-details">
-                        <h2>User Details</h2>
-                        <div className="detail-card">
-                            <div className="detail-row">
-                                <span className="label">Name:</span>
-                                <span className="value">{selectedUser.firstName} {selectedUser.lastName}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Email:</span>
-                                <span className="value">{selectedUser.email}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Phone:</span>
-                                <span className="value">{selectedUser.phoneNumber}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Status:</span>
-                                <span className={`value ${selectedUser.active ? 'active' : 'inactive'}`}>
-                                    {selectedUser.active ? 'ACTIVE' : 'INACTIVE'}
-                                </span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Auth Provider:</span>
-                                <span className="value">{selectedUser.authProvider}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Roles:</span>
-                                <span className="value">
-                                    {selectedUser.roles.map(role => (
-                                        <span key={role.id} className="role-badge">{role.name}</span>
-                                    ))}
-                                </span>
-                            </div>
-                        </div>
-
-                        <h3>Accounts</h3>
-                        {selectedUser.accounts.map(account => (
-                            <div key={account.id} className="account-card">
-                                <div className="account-header">
-                                    <h4>{account.accountType} Account - {account.accountNumber}</h4>
-                                    <span className={`status ${account.status.toLowerCase()}`}>{account.status}</span>
-                                </div>
-                                <div className="account-details">
-                                    <p>Balance: {formatCurrency(account.balance, account.currency)}</p>
-                                    <p>Created: {formatDate(account.createdAt)}</p>
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={() => loadAccountTransactions(account.accountNumber)}
+                {activeTab === "overview" && (
+                    <Stack spacing={2.25}>
+                        <Grid container spacing={2.25}>
+                            {[
+                                { label: "Total users", value: systemTotals?.totalUsers || 0 },
+                                { label: "Total accounts", value: systemTotals?.totalAccounts || 0 },
+                                { label: "Total transactions", value: systemTotals?.totalTransactions || 0 },
+                            ].map((stat) => (
+                                <Grid key={stat.label} item xs={12} sm={4}>
+                                    <Paper
+                                        variant="outlined"
+                                        sx={{
+                                            p: 2.25,
+                                            borderRadius: 3,
+                                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                        }}
                                     >
-                                        View Transactions
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                                        <Typography color="text.secondary">{stat.label}</Typography>
+                                        <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5 }}>
+                                            {stat.value}
+                                        </Typography>
+                                    </Paper>
+                                </Grid>
+                            ))}
+                        </Grid>
 
-            {activeTab === 'account' && selectedAccount && (
-                <div className="tab-content">
-                    <div className="account-details">
-                        <h2>Account Details</h2>
-                        <div className="detail-card">
-                            <div className="detail-row">
-                                <span className="label">Account Number:</span>
-                                <span className="value">{selectedAccount.accountNumber}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Type:</span>
-                                <span className="value">{selectedAccount.accountType}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Balance:</span>
-                                <span className="value">{formatCurrency(selectedAccount.balance, selectedAccount.currency)}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Status:</span>
-                                <span className={`value ${selectedAccount.status.toLowerCase()}`}>{selectedAccount.status}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Created:</span>
-                                <span className="value">{formatDate(selectedAccount.createdAt)}</span>
-                            </div>
-                        </div>
-
-                        <h3>Recent Transactions</h3>
-                        <button
-                            className="btn btn-primary"
-                            onClick={() => loadAccountTransactions(selectedAccount.accountNumber)}
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                p: 2.25,
+                                borderRadius: 3,
+                                borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                            }}
                         >
-                            View All Transactions
-                        </button>
-                    </div>
-                </div>
-            )}
+                            <Typography sx={{ fontWeight: 900, mb: 1 }}>Quick actions</Typography>
+                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
+                                <Button variant="contained" onClick={() => setActiveTab("search")}>Search records</Button>
+                                <Button variant="outlined" onClick={loadSystemTotals}>Refresh statistics</Button>
+                            </Stack>
+                        </Paper>
+                    </Stack>
+                )}
 
-            {activeTab === 'transactions' && accountTransactions.length > 0 && (
-                <div className="tab-content">
-                    <div className="transactions-list">
-                        <h2>Transactions for Account</h2>
-                        {accountTransactions.map(transaction => (
-                            <div key={transaction.id} className="transaction-card">
-                                <div className="transaction-header">
-                                    <h4>{transaction.transactionType} - {formatCurrency(transaction.amount)}</h4>
-                                    <span className={`status ${transaction.status.toLowerCase()}`}>{transaction.status}</span>
-                                </div>
-                                <div className="transaction-details">
-                                    <p>Date: {formatDate(transaction.transactionDate)}</p>
-                                    <p>Description: {transaction.description}</p>
-                                    {transaction.sourceAccount && transaction.destinationAccount && (
-                                        <p>From: {transaction.sourceAccount} → To: {transaction.destinationAccount}</p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                {activeTab === "search" && (
+                    <Grid container spacing={2.25}>
+                        <Grid item xs={12} md={4}>
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    p: 2.25,
+                                    borderRadius: 3,
+                                    borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                    backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                }}
+                            >
+                                <Typography sx={{ fontWeight: 900, mb: 1 }}>User by email</Typography>
+                                <Stack spacing={1.25}>
+                                    <TextField
+                                        type="email"
+                                        value={userEmail}
+                                        onChange={(e) => setUserEmail(e.target.value)}
+                                        placeholder="Enter email"
+                                        label="Email"
+                                    />
+                                    <Button variant="contained" onClick={searchUser}>Search user</Button>
+                                </Stack>
+                            </Paper>
+                        </Grid>
 
-            {activeTab === 'transaction' && selectedTransaction && (
-                <div className="tab-content">
-                    <div className="transaction-details">
-                        <h2>Transaction Details</h2>
-                        <div className="detail-card">
-                            <div className="detail-row">
-                                <span className="label">ID:</span>
-                                <span className="value">{selectedTransaction.id}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Amount:</span>
-                                <span className="value">{formatCurrency(selectedTransaction.amount)}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Type:</span>
-                                <span className="value">{selectedTransaction.transactionType}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Date:</span>
-                                <span className="value">{formatDate(selectedTransaction.transactionDate)}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Description:</span>
-                                <span className="value">{selectedTransaction.description}</span>
-                            </div>
-                            <div className="detail-row">
-                                <span className="label">Status:</span>
-                                <span className={`value ${selectedTransaction.status.toLowerCase()}`}>
-                                    {selectedTransaction.status}
-                                </span>
-                            </div>
-                            {selectedTransaction.sourceAccount && (
-                                <div className="detail-row">
-                                    <span className="label">Source Account:</span>
-                                    <span className="value">{selectedTransaction.sourceAccount}</span>
-                                </div>
-                            )}
-                            {selectedTransaction.destinationAccount && (
-                                <div className="detail-row">
-                                    <span className="label">Destination Account:</span>
-                                    <span className="value">{selectedTransaction.destinationAccount}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+                        <Grid item xs={12} md={4}>
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    p: 2.25,
+                                    borderRadius: 3,
+                                    borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                    backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                }}
+                            >
+                                <Typography sx={{ fontWeight: 900, mb: 1 }}>Account by number</Typography>
+                                <Stack spacing={1.25}>
+                                    <TextField
+                                        value={accountNumber}
+                                        onChange={(e) => setAccountNumber(e.target.value)}
+                                        placeholder="Enter account number"
+                                        label="Account number"
+                                    />
+                                    <Button variant="contained" onClick={searchAccount}>Search account</Button>
+                                </Stack>
+                            </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} md={4}>
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    p: 2.25,
+                                    borderRadius: 3,
+                                    borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                    backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                }}
+                            >
+                                <Typography sx={{ fontWeight: 900, mb: 1 }}>Transaction by ID</Typography>
+                                <Stack spacing={1.25}>
+                                    <TextField
+                                        type="number"
+                                        value={transactionId}
+                                        onChange={(e) => setTransactionId(e.target.value)}
+                                        placeholder="Enter transaction ID"
+                                        label="Transaction ID"
+                                    />
+                                    <Button variant="contained" onClick={searchTransaction}>Search transaction</Button>
+                                </Stack>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+                )}
+
+                {activeTab === "user" && selectedUser && (
+                    <Stack spacing={2.25}>
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                p: 2.25,
+                                borderRadius: 3,
+                                borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                            }}
+                        >
+                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }}>
+                                <Typography sx={{ fontWeight: 900 }}>User details</Typography>
+                                <Chip
+                                    size="small"
+                                    label={selectedUser.active ? "ACTIVE" : "INACTIVE"}
+                                    color={selectedUser.active ? "success" : "default"}
+                                    variant={selectedUser.active ? "filled" : "outlined"}
+                                />
+                            </Stack>
+                            <Divider sx={{ my: 1.75, opacity: 0.16 }} />
+
+                            <Grid container spacing={1.75}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Name</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedUser.firstName} {selectedUser.lastName}</Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Email</Typography>
+                                    <Typography sx={{ fontWeight: 700, wordBreak: "break-word" }}>{selectedUser.email}</Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Phone</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedUser.phoneNumber}</Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Auth provider</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedUser.authProvider}</Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption" color="text.secondary">Roles</Typography>
+                                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 0.5 }}>
+                                        {selectedUser.roles.map((role) => (
+                                            <Chip key={role.id} size="small" label={role.name} variant="outlined" />
+                                        ))}
+                                    </Stack>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+
+                        <Box>
+                            <Typography sx={{ fontWeight: 900, mb: 1 }}>Accounts</Typography>
+                            <Stack spacing={1.5}>
+                                {selectedUser.accounts.map((account) => (
+                                    <Paper
+                                        key={account.id}
+                                        variant="outlined"
+                                        sx={{
+                                            p: 2.25,
+                                            borderRadius: 3,
+                                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                                        }}
+                                    >
+                                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }}>
+                                            <Typography sx={{ fontWeight: 900 }}>
+                                                {account.accountType} — {account.accountNumber}
+                                            </Typography>
+                                            <Chip size="small" label={account.status} variant="outlined" />
+                                        </Stack>
+                                        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                                            Balance: {formatCurrency(account.balance, account.currency)}
+                                        </Typography>
+                                        <Typography color="text.secondary">
+                                            Created: {formatDate(account.createdAt)}
+                                        </Typography>
+                                        <Button
+                                            variant="outlined"
+                                            sx={{ mt: 1.25 }}
+                                            onClick={() => loadAccountTransactions(account.accountNumber)}
+                                        >
+                                            View transactions
+                                        </Button>
+                                    </Paper>
+                                ))}
+                            </Stack>
+                        </Box>
+                    </Stack>
+                )}
+
+                {activeTab === "account" && selectedAccount && (
+                    <Stack spacing={2.25}>
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                p: 2.25,
+                                borderRadius: 3,
+                                borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                            }}
+                        >
+                            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }}>
+                                <Typography sx={{ fontWeight: 900 }}>Account details</Typography>
+                                <Chip size="small" label={selectedAccount.status} variant="outlined" />
+                            </Stack>
+                            <Divider sx={{ my: 1.75, opacity: 0.16 }} />
+
+                            <Grid container spacing={1.75}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Account number</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedAccount.accountNumber}</Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Type</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedAccount.accountType}</Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Balance</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{formatCurrency(selectedAccount.balance, selectedAccount.currency)}</Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Created</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{formatDate(selectedAccount.createdAt)}</Typography>
+                                </Grid>
+                            </Grid>
+
+                            <Button
+                                variant="contained"
+                                sx={{ mt: 2 }}
+                                onClick={() => loadAccountTransactions(selectedAccount.accountNumber)}
+                            >
+                                View all transactions
+                            </Button>
+                        </Paper>
+                    </Stack>
+                )}
+
+                {activeTab === "transactions" && accountTransactions.length > 0 && (
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            p: 2.25,
+                            borderRadius: 3,
+                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                        }}
+                    >
+                        <Typography sx={{ fontWeight: 900, mb: 1 }}>Transactions</Typography>
+                        <Divider sx={{ mb: 1.5, opacity: 0.16 }} />
+                        <Stack spacing={1.25}>
+                            {accountTransactions.map((transaction) => (
+                                <Paper
+                                    key={transaction.id}
+                                    variant="outlined"
+                                    sx={{
+                                        p: 1.75,
+                                        borderRadius: 2,
+                                        borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                                        backgroundColor: (t) => alpha(t.palette.background.default, 0.25),
+                                    }}
+                                >
+                                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }}>
+                                        <Typography sx={{ fontWeight: 900 }}>
+                                            {transaction.transactionType} — {formatCurrency(transaction.amount)}
+                                        </Typography>
+                                        <Chip size="small" label={transaction.status} variant="outlined" />
+                                    </Stack>
+                                    <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                                        Date: {formatDate(transaction.transactionDate)}
+                                    </Typography>
+                                    <Typography color="text.secondary">
+                                        Description: {transaction.description}
+                                    </Typography>
+                                    {transaction.sourceAccount && transaction.destinationAccount ? (
+                                        <Typography color="text.secondary">
+                                            From: {transaction.sourceAccount} → To: {transaction.destinationAccount}
+                                        </Typography>
+                                    ) : null}
+                                </Paper>
+                            ))}
+                        </Stack>
+                    </Paper>
+                )}
+
+                {activeTab === "transaction" && selectedTransaction && (
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            p: 2.25,
+                            borderRadius: 3,
+                            borderColor: (t) => alpha(t.palette.common.white, 0.08),
+                            backgroundColor: (t) => alpha(t.palette.background.paper, 0.68),
+                        }}
+                    >
+                        <Typography sx={{ fontWeight: 900, mb: 1 }}>Transaction details</Typography>
+                        <Divider sx={{ mb: 1.5, opacity: 0.16 }} />
+
+                        <Grid container spacing={1.75}>
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="caption" color="text.secondary">ID</Typography>
+                                <Typography sx={{ fontWeight: 700 }}>{selectedTransaction.id}</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="caption" color="text.secondary">Amount</Typography>
+                                <Typography sx={{ fontWeight: 700 }}>{formatCurrency(selectedTransaction.amount)}</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="caption" color="text.secondary">Type</Typography>
+                                <Typography sx={{ fontWeight: 700 }}>{selectedTransaction.transactionType}</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="caption" color="text.secondary">Date</Typography>
+                                <Typography sx={{ fontWeight: 700 }}>{formatDate(selectedTransaction.transactionDate)}</Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="caption" color="text.secondary">Description</Typography>
+                                <Typography sx={{ fontWeight: 700 }}>{selectedTransaction.description}</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="caption" color="text.secondary">Status</Typography>
+                                <Chip size="small" label={selectedTransaction.status} variant="outlined" />
+                            </Grid>
+                            {selectedTransaction.sourceAccount ? (
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Source</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedTransaction.sourceAccount}</Typography>
+                                </Grid>
+                            ) : null}
+                            {selectedTransaction.destinationAccount ? (
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="caption" color="text.secondary">Destination</Typography>
+                                    <Typography sx={{ fontWeight: 700 }}>{selectedTransaction.destinationAccount}</Typography>
+                                </Grid>
+                            ) : null}
+                        </Grid>
+                    </Paper>
+                )}
+            </Stack>
+        </PageLayout>
     );
 
 }
