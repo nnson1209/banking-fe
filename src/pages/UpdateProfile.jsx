@@ -137,7 +137,7 @@ const UpdateProfile = () => {
         <PageLayout
             title="Change password"
             subtitle="Enter your current password and set a new one."
-            maxWidth="sm"
+            maxWidth="lg"
             actions={
                 <Button variant="outlined" onClick={() => navigate("/profile")}>
                     Back to profile

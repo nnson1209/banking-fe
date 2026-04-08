@@ -22,6 +22,9 @@ import {
 import { alpha } from "@mui/material/styles";
 
 
+const TRANSACTIONS_PER_PAGE = 3;
+
+
 
 const Transactions = () => {
 
@@ -35,7 +38,7 @@ const Transactions = () => {
     const [pagination, setPagination] = useState({
         currentPage: 0,
         totalPages: 0,
-        pageSize: 2,
+        pageSize: TRANSACTIONS_PER_PAGE,
         totalItems: 0
     });
 
@@ -65,13 +68,13 @@ const Transactions = () => {
         setError('');
 
         try {
-            const response = await apiService.getTransactions(accountNumber, page, pagination.pageSize);
+            const response = await apiService.getTransactions(accountNumber, page, TRANSACTIONS_PER_PAGE);
             if (response.data.statusCode === 200) {
                 setTransactions(response.data.data);
                 setPagination({
                     currentPage: response.data.meta.currentPage,
                     totalPages: response.data.meta.totalPages,
-                    pageSize: response.data.meta.pageSize,
+                    pageSize: TRANSACTIONS_PER_PAGE,
                     totalItems: response.data.meta.totalItems
                 });
             } else {
@@ -84,7 +87,7 @@ const Transactions = () => {
         } finally {
             setLoading(false)
         }
-    }, [pagination.pageSize]);
+    }, []);
 
 
 
@@ -133,23 +136,31 @@ const Transactions = () => {
             subtitle="View your transaction history"
             maxWidth="lg"
         >
-            <Stack spacing={2}>
+            <Stack spacing={2.25}>
                 {error && <Alert severity="error">{error}</Alert>}
 
-                <TextField
-                    select
-                    label="Account"
-                    value={selectedAccount}
-                    onChange={handleAccountChange}
-                    disabled={loading}
-                    helperText={userAccounts.length ? " " : "No accounts found"}
+                <Box
+                    sx={{
+                        width: "100%",
+                        maxWidth: { xs: "100%", md: 420 },
+                    }}
                 >
-                    {userAccounts.map((account) => (
-                        <MenuItem key={account.id} value={account.accountNumber}>
-                            {account.accountNumber} — {account.accountType}
-                        </MenuItem>
-                    ))}
-                </TextField>
+                    <TextField
+                        select
+                        label="Account"
+                        value={selectedAccount}
+                        onChange={handleAccountChange}
+                        disabled={loading}
+                        helperText={userAccounts.length ? " " : "No accounts found"}
+                        fullWidth
+                    >
+                        {userAccounts.map((account) => (
+                            <MenuItem key={account.id} value={account.accountNumber}>
+                                {account.accountNumber} — {account.accountType}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Box>
 
                 {loading ? (
                     <Box sx={{ py: 6, display: "grid", placeItems: "center" }}>
@@ -166,21 +177,31 @@ const Transactions = () => {
                         }}
                     >
                         <TableContainer>
-                            <Table size="small">
+                            <Table
+                                size="small"
+                                sx={{
+                                    tableLayout: "fixed",
+                                    "& .MuiTableCell-root": {
+                                        py: 1.2,
+                                        px: { xs: 1.1, sm: 1.5 },
+                                        verticalAlign: "top",
+                                    },
+                                }}
+                            >
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
-                                        <TableCell sx={{ fontWeight: 900 }} align="right">Amount</TableCell>
-                                        <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 900 }}>Description</TableCell>
-                                        <TableCell sx={{ fontWeight: 900 }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 900, width: "24%" }}>Type</TableCell>
+                                        <TableCell sx={{ fontWeight: 900, width: "16%" }} align="right">Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 900, width: "22%" }}>Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 900, width: "26%" }}>Description</TableCell>
+                                        <TableCell sx={{ fontWeight: 900, width: "12%" }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {transactions.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5}>
-                                                <Typography color="text.secondary">
+                                            <TableCell colSpan={5} sx={{ py: 4 }}>
+                                                <Typography color="text.secondary" sx={{ textAlign: "center" }}>
                                                     No transactions found for this account.
                                                 </Typography>
                                             </TableCell>
@@ -223,8 +244,15 @@ const Transactions = () => {
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
-                                                            {transaction.description}
+                                                        <Typography
+                                                            color="text.secondary"
+                                                            sx={{
+                                                                overflow: "hidden",
+                                                                textOverflow: "ellipsis",
+                                                                whiteSpace: "nowrap",
+                                                            }}
+                                                        >
+                                                            {transaction.description || "—"}
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell>

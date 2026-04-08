@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiService } from '../services/api';
 import PageLayout from "../components/PageLayout";
 import {
@@ -39,31 +39,47 @@ const Transfer = () => {
     const [verifyingAccount, setVerifyingAccount] = useState(false);
 
 
-    useEffect(() => {
+    const fetchUserAccounts = useCallback(async (preferredAccountNumber = "") => {
+        try {
+            const response = await apiService.getMyAccounts();
 
-        const fetchUserAccounts = async () => {
-            try {
+            if (response.data.statusCode === 200) {
+                const accounts = response.data.data || [];
+                setUserAccounts(accounts);
 
-                const response = await apiService.getMyAccounts();
-
-                if (response.data.statusCode === 200) {
-                    setUserAccounts(response.data.data);
-
-                    if (response.data.data.length > 0) {
-                        setFormData(prev => ({
+                setFormData((prev) => {
+                    if (accounts.length === 0) {
+                        return {
                             ...prev,
-                            accountNumber: response.data.data[0].accountNumber
-                        }));
+                            accountNumber: "",
+                        };
                     }
-                }
 
+                    const hasPreferredAccount = preferredAccountNumber
+                        && accounts.some((account) => account.accountNumber === preferredAccountNumber);
+                    const hasCurrentAccount = prev.accountNumber
+                        && accounts.some((account) => account.accountNumber === prev.accountNumber);
 
-            } catch (error) {
-                console.log(error)
+                    return {
+                        ...prev,
+                        accountNumber: hasPreferredAccount
+                            ? preferredAccountNumber
+                            : hasCurrentAccount
+                                ? prev.accountNumber
+                                : accounts[0].accountNumber,
+                    };
+                });
             }
+
+        } catch (error) {
+            console.log(error)
         }
-        fetchUserAccounts()
     }, []);
+
+
+    useEffect(() => {
+        fetchUserAccounts()
+    }, [fetchUserAccounts]);
 
 
 
@@ -158,6 +174,7 @@ const Transfer = () => {
 
 
         try {
+            const sourceAccountNumber = formData.accountNumber;
 
             const transferData = {
                 transactionType: 'TRANSFER',
@@ -172,21 +189,18 @@ const Transfer = () => {
 
             if (response.data.statusCode === 200) {
                 setSuccess('Transfer completed successfully!');
+
                 // Reset form
-                setFormData({
+                setFormData((prev) => ({
+                    ...prev,
                     amount: '',
                     destinationAccountNumber: '',
                     description: '',
-                    accountNumber: userAccounts[0]?.accountNumber || ''
-                });
+                }));
 
 
                 setDestinationAccountInfo(null);
-
-                // Refresh user data after successful transfer
-                setTimeout(() => {
-                    window.location.reload();
-                }, 5000);
+                await fetchUserAccounts(sourceAccountNumber);
             } else {
                 setError(response.data.message || 'Transfer failed');
             }

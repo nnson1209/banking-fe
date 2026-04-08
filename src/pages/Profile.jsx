@@ -74,7 +74,7 @@ const Profile = () => {
             setError(error.response?.data?.message || 'An error occurred while uploading profile picture');
 
         } finally {
-            setLoading(false)
+            setUploading(false)
         }
     }
 
@@ -291,7 +291,7 @@ const Profile = () => {
 
                                     {account.transactions && account.transactions.length > 0 ? (
                                         <Stack spacing={1}>
-                                            {account.transactions.slice(0, 5).map((transaction) => {
+                                            {account.transactions.slice(0, 3).map((transaction) => {
                                                 const isOut =
                                                     transaction.transactionType === "WITHDRAWAL" ||
                                                     transaction.transactionType === "TRANSFER";
