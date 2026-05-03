@@ -3,7 +3,7 @@ import axios from "axios";
 
 //const API_BASE_URL = "http://localhost:8090/api"; //local url
 
-const API_BASE_URL = "http://34.203.13.242:8090/api";//prod url
+const API_BASE_URL = "http://54.242.104.96:8090/api";//prod url
 
 
 // Create axios instance
